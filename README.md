@@ -34,6 +34,6 @@ sh ./run_jupyter.sh
 ```
 This script internally spins up docker and hosts a jupyter notebook server which you can access via your browser. 
 
-Navigate to http://localhost:8888 in your browswer. The server password is `manifold`.
+Navigate to http://localhost:8888 in your browswer. The token is `manifold`.
 
 
