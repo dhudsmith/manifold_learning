@@ -36,4 +36,6 @@ This script internally spins up docker and hosts a jupyter notebook server which
 
 Navigate to http://localhost:8888 in your browswer. The token is `manifold`.
 
+You can learn the basics of jupyter notebooks here: https://realpython.com/jupyter-notebook-introduction/. Use `shift+enter` to execute cell.
+
 
