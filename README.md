@@ -25,10 +25,10 @@ sh run_docker_shell.sh
 ```
 This command starts a bash terminal within the Docker environment. You should now be able to execute commands within the docker environment. Make sure that you can view the `manifold_learning` code. 
 
-You can exit the notebook by executing `exit` from the terminal.
+You can exit docker with `exit` from the terminal.
 
 ### Running jupyter notebooks
-Run your jupyter notebook server by navigating into the `manifold_learning` and executing the command below.
+Run your jupyter notebook server by navigating into the `manifold_learning` directory and executing the command below.
 ```
 sh run_docker_jupyter.sh
 ```
