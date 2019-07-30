@@ -11,7 +11,7 @@ Install Docker on your machine. You can find installation instructions for vario
 
 Once docker is installed, download the docker container image for this project by executing the command below from a terminal (current working directory does not matter). The docker images is very large, so this will take a while. Go make yourself a cup of coffee (or tea). 
 ```
-sudo docker pull docker pull nvcr.io/nvidia/pytorch:19.06-py3
+docker pull nvcr.io/nvidia/pytorch:19.06-py3
 ```
 
 If operating on Windows, before testing your docker setup, go into Docker Settings->Shared Drives and click the checkbox next to the drive holding the cloned/downloaded code repository.  A more detailed walkthrough can be found in [this tutorial](https://token2shell.com/howto/docker/sharing-windows-folders-with-containers/).
