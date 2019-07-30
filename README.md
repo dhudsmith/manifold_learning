@@ -21,7 +21,7 @@ If operating on Windows, before testing your docker setup, go into Docker Settin
 ### Test your environment
 Test your docker setup by navigating into the `manifold_learning` directory that you cloned above and executing the following command:
 ```
-sudo ./run_docker.sh
+sh run_docker_shell.sh
 ```
 This command starts a bash terminal within the Docker environment. You should now be able to execute commands within the docker environment. Make sure that you can view the `manifold_learning` code. 
 
@@ -30,12 +30,8 @@ You can exit the notebook by executing `exit` from the terminal.
 ### Running jupyter notebooks
 Run your jupyter notebook server by navigating into the `manifold_learning` and executing the command below.
 ```
-sh ./run_jupyter.sh
+sh run_docker_jupyter.sh
 ```
-This script internally spins up docker and hosts a jupyter notebook server which you can access via your browser. 
+This script internally spins up docker and hosts a jupyter notebook server which you can access via your browser at http://localhost:8888. Copy and paste the token from the command line output.
 
-Navigate to http://localhost:8888 in your browswer. The token is `manifold`.
-
-You can learn the basics of jupyter notebooks here: https://realpython.com/jupyter-notebook-introduction/. Use `shift+enter` to execute cell.
-
-
+You can learn the basics of jupyter notebooks here: https://realpython.com/jupyter-notebook-introduction/. Use `shift+enter` to execute a cell.
