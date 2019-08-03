@@ -9,15 +9,6 @@ from time import time
 ##
 ## Setup
 
-# use nvidia gpu if available
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
-    
-# only float32 tested
-dtype = torch.float32
-
 class L2Norm(nn.Module):
     """L2Norm model class -- a layer class for normalizing a matrix of vectors
     
@@ -49,19 +40,19 @@ class Hamiltonian(nn.Module):
         self.H = H
         self.N = N
         self.N_proj = N_proj
-        self.eye = torch.eye(N_proj, device=device, dtype=dtype)
+        self.register_buffer('eye', torch.eye(N_proj))
         
         # initialize the encoder and decoder architectures
         self.decoder = nn.Sequential(OrderedDict([('matmul', nn.Linear(self.N_proj, self.N, bias=False)),
                                                   ('normalize', L2Norm())
                                                   ]))
-
+        
     # return the current cost matrix
     def forward(self):
         M = self.decoder(self.eye)
         return M @ self.H @ M.t(), M @ M.t()
     
-class Cost():
+class Cost(nn.Module):
     """Cost class -- used to calculate goodness of projection map for optimization purposes
     
     Args:
@@ -74,12 +65,11 @@ class Cost():
         
         self.N_proj = N_proj
         self.alpha = alpha
-        self.eye = torch.eye(N_proj, device=device, dtype=dtype)
-        self.sorter = torch.tensor([[1/((i+1)*(j+1))**2 for i in range(self.N_proj)] for j in range(self.N_proj)], device=device, dtype=dtype)
-
+        self.register_buffer('eye', torch.eye(N_proj))
+        self.register_buffer('sorter', torch.tensor([[1/((i+1)*(j+1))**2 for i in range(self.N_proj)] for j in range(self.N_proj)]))
         
     def __call__(self, Hproj, Iproj):
-        cost_matrix = (Hproj*self.sorter)**2 + self.alpha * (Iproj - self.eye)**2
+        cost_matrix = (Hproj*self.sorter)**2 + self.alpha * (Iproj - self.eye)**2 * torch.sqrt(self.sorter)
         return cost_matrix.sum()/self.N_proj**2
     
 def early_stop(errs, rel_tol, patience=2):

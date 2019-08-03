@@ -3,23 +3,11 @@ import math
 import torch
 from scipy.stats import ortho_group
 from scipy.sparse import spdiags
-
-##
-## Setup
-
-# use nvidia gpu if available
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
-    
-# only float32 tested
-dtype = torch.float32
     
 ##
 ## Hamiltonian functions
 
-def H_ring_2particles(basis_size, g): # g for interaction strength, it is better if the basis_size is an odd number 
+def H_ring_2particles(basis_size, g, device, dtype): # g for interaction strength, it is better if the basis_size is an odd number 
     H_data = g*np.ones((basis_size,basis_size)) # potential energy
     H_diag=np.zeros(basis_size)
     
@@ -30,7 +18,7 @@ def H_ring_2particles(basis_size, g): # g for interaction strength, it is better
     
     return H_phys
 
-def H_random(basis_size):
+def H_random(basis_size, device, dtype):
     eigs,_ = (torch.rand(basis_size, device=device, dtype=dtype)*basis_size).sort()
     Hgen_proj = torch.diag(eigs)
     Wgen = torch.tensor(ortho_group.rvs(basis_size), device=device, dtype=dtype)
@@ -39,7 +27,7 @@ def H_random(basis_size):
     
     return Hgen, Wgen, eigs
 
-def H_random_banded(basis_size, n_diags):
+def H_random_banded(basis_size, n_diags, device, dtype):
     '''
     Generate a random band-diagonal hamiltonian with `n_diags` non-zero diagonals above the center diagonal.
     '''
@@ -59,23 +47,36 @@ def H_random_banded(basis_size, n_diags):
 ##
 ## Run tests with `python hamiltonian.py`
 if __name__=='__main__':
+
     ##
     ## Test the hamiltonian functions
     print("Testing Hamiltonians")
+    
+    # use nvidia gpu if available
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+
+    # only float32 tested
+    dtype = torch.double
+
+    print("Device:", device)
+    print("Data type:", dtype)
     
     # H_ring_2particles
     basis_size=7
     g=2
     print("\nTesting `H_ring_2particles` with parameters: basis_size=%i, g=%0.2f" % (basis_size, g))
-    print(H_ring_2particles(basis_size,g))
+    print(H_ring_2particles(basis_size, g, device, dtype))
     
     # H_random
     basis_size=7
     print("\nTesting `H_random` with parameters: basis_size=%i" % basis_size)
-    print(H_random(basis_size))
+    print(H_random(basis_size, device, dtype))
     
     # H_random_banded
     basis_size=7
     n_diags = 4
     print("\nTesting `H_random` with parameters: basis_size=%i, n_diags=%i" % (basis_size, n_diags))
-    print(H_random_banded(basis_size, n_diags))
+    print(H_random_banded(basis_size, n_diags, device, dtype))
