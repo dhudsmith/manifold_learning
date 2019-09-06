@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import torch.optim as optim
 from collections import OrderedDict
 import numpy as np
+import matplotlib.pyplot as plt
 from time import time
 
 ##
@@ -69,8 +70,9 @@ class Cost(nn.Module):
         self.register_buffer('sorter', torch.tensor([[1/((i+1)*(j+1))**2 for i in range(self.N_proj)] for j in range(self.N_proj)]))
         
     def __call__(self, Hproj, Iproj):
-        cost_matrix = (Hproj*self.sorter)**2 + self.alpha * (Iproj - self.eye)**2 * torch.sqrt(self.sorter)
-        return cost_matrix.sum()/self.N_proj**2
+        cost_H = ((Hproj*self.sorter)**2).sum()/self.N_proj**2
+        cost_I = (self.alpha * (Iproj - self.eye)**2 * torch.sqrt(self.sorter)).sum()/self.N_proj**2
+        return cost_H + cost_I, cost_H, cost_I
     
 def early_stop(errs, rel_tol, patience=2):
     stop=True
@@ -82,12 +84,16 @@ def early_stop(errs, rel_tol, patience=2):
 def optimize(model, optimizer, criterion, n_iter, n_save, show_progress=True, stop_early=True, rel_tol=0.01, patience=2):
     model.decoder.matmul.reset_parameters()
     running_loss= 0
+    running_loss_h= 0
+    running_loss_i= 0
     start_time = time()
     
     # store progress every n_save iters
     j=0
     its = []
     errs = []
+    errs_h = []
+    errs_i = []
     Hps = []
     Ips = []
     ts = []
@@ -99,16 +105,21 @@ def optimize(model, optimizer, criterion, n_iter, n_save, show_progress=True, st
 
         # forward + backward + optimize
         Hp, Ip = model()
-        loss = criterion(Hp, Ip)
+        loss, loss_h, loss_i = criterion(Hp, Ip)
         loss.backward()
         optimizer.step()
 
         # print /save statistics
         running_loss += loss.item()
+        running_loss_h += loss_h.item()
+        running_loss_i += loss_i.item()
+        
         if i % n_save == 0:
             # save progress
             its.append(i)
             errs.append(running_loss)
+            errs_h.append(running_loss_h)
+            errs_i.append(running_loss_i)
             Hps.append(Hp)
             Ips.append(Ip)
             ts.append(time() - start_time)
@@ -116,15 +127,27 @@ def optimize(model, optimizer, criterion, n_iter, n_save, show_progress=True, st
             # print progress 
             if show_progress:
                 change = errs[j]-errs[j-1] if j>0 else 0
-                print('[%d] loss: %.8f. diff: %.8f. time: %.4f' % (i + 1, running_loss / 10, change, ts[-1]))
+                print('[%d] loss: %.8f (%.6f/%.6f). diff: %.8f. time: %.4f' % (i + 1, 
+                                                                                 running_loss / n_save, 
+                                                                                 running_loss_h / n_save, 
+                                                                                 running_loss_i / n_save, 
+                                                                                 change, ts[-1]))
             
             if j>=patience and stop_early and early_stop(errs, rel_tol, patience):
                 print("Early stopping criteria met.")
                 break
             
             running_loss = 0.0
+            running_loss_h = 0.0
+            running_loss_i = 0.0
             j+=1
             
 
     print('Finished Training')
     return its, errs, Hps, Ips, ts
+
+def plot_rel_err(eigs, eigs_approx):
+    plt.plot((eigs_approx - eigs)/eigs, 'o-')
+    plt.hlines(0, 0, len(eigs), linestyles='dashed')
+    plt.xlabel = 'excitation number'
+    plt.ylabel = 'error'
