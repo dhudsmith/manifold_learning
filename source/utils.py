@@ -81,7 +81,7 @@ def early_stop(errs, rel_tol, patience=2):
         stop = stop and rel_change < rel_tol
     return stop
 
-def optimize(model, optimizer, criterion, n_iter, n_save, show_progress=True, stop_early=True, rel_tol=0.01, patience=2):
+def optimize(model, optimizer, criterion, n_iter, n_save, log_func, log_wait=200, show_progress=True, stop_early=True, rel_tol=0.01, patience=2):
     model.decoder.matmul.reset_parameters()
     running_loss= 0
     running_loss_h= 0
@@ -114,7 +114,9 @@ def optimize(model, optimizer, criterion, n_iter, n_save, show_progress=True, st
         running_loss_h += loss_h.item()
         running_loss_i += loss_i.item()
         
-        if i % n_save == 0:
+        # show progress and log ever n_save steps
+        # todo: separate logging and progress
+        if i % n_save == n_save-1:
             # save progress
             its.append(i)
             errs.append(running_loss)
@@ -124,15 +126,22 @@ def optimize(model, optimizer, criterion, n_iter, n_save, show_progress=True, st
             Ips.append(Ip)
             ts.append(time() - start_time)
             
+            loss_ = running_loss / n_save
+            loss_h = running_loss_h / n_save
+            loss_i = running_loss_i / n_save
+            
             # print progress 
             if show_progress:
                 change = errs[j]-errs[j-1] if j>0 else 0
                 print('[%d] loss: %.8f (%.6f/%.6f). diff: %.8f. time: %.4f' % (i + 1, 
-                                                                                 running_loss / n_save, 
-                                                                                 running_loss_h / n_save, 
-                                                                                 running_loss_i / n_save, 
+                                                                                 loss_, 
+                                                                                 loss_h, 
+                                                                                 loss_i, 
                                                                                  change, ts[-1]))
-            
+            # log stuff (to wandb)
+            if i>=log_wait:
+                log_func(loss_, loss_h, loss_i, i)
+                
             if j>=patience and stop_early and early_stop(errs, rel_tol, patience):
                 print("Early stopping criteria met.")
                 break
